@@ -23,7 +23,6 @@ import { useAppSelector, useAppDispatch } from "@/lib/hooks/redux";
 import {
   setSortConfig,
   setCurrentPage,
-  setRowsPerPage,
   updateRow,
   deleteRow,
   setEditingRow,
@@ -80,7 +79,7 @@ export function DataTable() {
 
     // Apply search filter
     if (searchQuery) {
-      filtered = data.filter((row) =>
+      filtered = data.filter((row: Record<string, any>) =>
         Object.values(row).some((value) =>
           value?.toString().toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -89,18 +88,20 @@ export function DataTable() {
 
     // Apply sorting
     if (sortConfig) {
-      filtered = [...filtered].sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
+      filtered = [...filtered].sort(
+        (a: Record<string, any>, b: Record<string, any>) => {
+          const aValue = a[sortConfig.key];
+          const bValue = b[sortConfig.key];
 
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
+          if (aValue < bValue) {
+            return sortConfig.direction === "asc" ? -1 : 1;
+          }
+          if (aValue > bValue) {
+            return sortConfig.direction === "asc" ? 1 : -1;
+          }
+          return 0;
         }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
+      );
     }
     return filtered;
   }, [data, searchQuery, sortConfig]);
@@ -108,7 +109,7 @@ export function DataTable() {
   const rowsPerPage = 10; // Always 10 items per page
   const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
 
-  const paginatedData = React.useMemo(() => {
+  const paginatedData = useMemo(() => {
     const startIndex = currentPage * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     return filteredAndSortedData.slice(startIndex, endIndex);
@@ -126,18 +127,6 @@ export function DataTable() {
         direction: isAsc ? "desc" : "asc",
       })
     );
-  };
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    dispatch(setCurrentPage(newPage));
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    dispatch(setRowsPerPage(newRowsPerPage));
-    dispatch(setCurrentPage(0)); // Reset to first page when changing rows per page
   };
 
   const handleEdit = (rowId: string) => {
@@ -161,7 +150,7 @@ export function DataTable() {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-
+    if (!over) return;
     if (active.id !== over.id) {
       dispatch(reorderColumns({ activeId: active.id, overId: over.id }));
     }
@@ -199,7 +188,7 @@ export function DataTable() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedData.map((row) => {
+              {paginatedData.map((row: TableRowType) => {
                 const isEditing =
                   Array.isArray(editingRows) && editingRows.includes(row.id);
                 return (
@@ -219,7 +208,7 @@ export function DataTable() {
                         value={row[column.id]}
                         column={column}
                         isEditing={isEditing}
-                        onSave={(value) =>
+                        onSave={(value: any) =>
                           handleSave(row.id, { [column.id]: value })
                         }
                       />
@@ -285,7 +274,7 @@ export function DataTable() {
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
                 if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
               }}
@@ -301,7 +290,7 @@ export function DataTable() {
             <PaginationItem key={idx}>
               <PaginationLink
                 isActive={currentPage === idx}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.preventDefault();
                   dispatch(setCurrentPage(idx));
                 }}
@@ -313,7 +302,7 @@ export function DataTable() {
           ))}
           <PaginationItem>
             <PaginationNext
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
                 if (currentPage < totalPages - 1)
                   dispatch(setCurrentPage(currentPage + 1));
